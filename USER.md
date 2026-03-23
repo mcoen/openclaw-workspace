@@ -4,6 +4,7 @@ _Learn about the person you're helping. Update this as you go._
 
 - **Name:** Mike
 - **What to call them:** Mike
+- **Notes:** Hank is a dog and very loyal.
 - **Pronouns:** _(optional)_
 - **Timezone:**
 - **Notes:**
