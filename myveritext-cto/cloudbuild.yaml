@@ -1,9 +1,9 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${SHORT_SHA}', '.']
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${_TAG}', '.']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${SHORT_SHA}']
+    args: ['push', '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${_TAG}']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
@@ -11,7 +11,7 @@ steps:
       - run
       - deploy
       - myveritext-cto-web
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${SHORT_SHA}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${_TAG}
       - --region=${_REGION}
       - --platform=managed
       - --no-allow-unauthenticated
@@ -20,6 +20,7 @@ steps:
 substitutions:
   _REGION: us-central1
   _REPO: myveritext
+  _TAG: latest
 
 images:
-  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${SHORT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/myveritext-cto-web:${_TAG}'

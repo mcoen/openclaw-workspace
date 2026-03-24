@@ -31,7 +31,7 @@ gcloud artifacts repositories create myveritext \
 
 gcloud builds submit \
   --config cloudbuild.yaml \
-  --substitutions _REGION="$REGION",_REPO="myveritext"
+  --substitutions _REGION="$REGION",_REPO="myveritext",_TAG="latest"
 ```
 
 ## Demo URL
