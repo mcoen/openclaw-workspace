@@ -16,6 +16,7 @@ const gitSummaryBadge = document.getElementById('gitSummaryBadge');
 const reminderList = document.getElementById('reminderList');
 const reminderBadge = document.getElementById('reminderBadge');
 const calendarList = document.getElementById('calendarList');
+const calendarBadge = document.getElementById('calendarBadge');
 const projectList = document.getElementById('projectList');
 const projectBadge = document.getElementById('projectBadge');
 const serviceList = document.getElementById('serviceList');
@@ -116,14 +117,33 @@ function renderReminders(reminders) {
     .join('');
 }
 
-function renderCalendar(events) {
+function renderCalendar(events, source, error) {
+  const sourceLabel = source === 'google' ? 'Google' : 'Config';
+  calendarBadge.textContent = `${events.length} · ${sourceLabel}`;
+
   if (!events.length) {
-    calendarList.innerHTML = '<div><strong>No events configured</strong><span class="muted">Edit mission-control/config.json to add upcoming events.</span></div>';
+    const emptyMessage = source === 'google'
+      ? 'No upcoming Google Calendar events found in the current lookahead window.'
+      : 'Edit mission-control/config.json to add upcoming events.';
+    calendarList.innerHTML = `<div><strong>No events available</strong><span class="muted">${escapeHtml(emptyMessage)}</span></div>`;
+    if (error) {
+      calendarList.innerHTML += `<div><strong>Calendar error</strong><span class="muted">${escapeHtml(error)}</span></div>`;
+    }
     return;
   }
+
   calendarList.innerHTML = events
-    .map((event) => `<div><strong>${escapeHtml(event.title || 'Event')}</strong><span class="muted">${escapeHtml(event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span></div>`)
+    .map((event) => `
+      <div>
+        <strong>${escapeHtml(event.title || 'Event')}</strong>
+        <span class="muted">${escapeHtml(event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span>
+      </div>
+    `)
     .join('');
+
+  if (error) {
+    calendarList.innerHTML += `<div><strong>Fallback notice</strong><span class="muted">${escapeHtml(error)}</span></div>`;
+  }
 }
 
 function renderProjects(repos) {
@@ -221,23 +241,15 @@ async function refreshDashboard() {
     modeLabel.textContent = 'Offline';
     modeSubtext.textContent = `API error: ${error.message}`;
     openclawOutput.textContent = `Failed to load /api/dashboard\n${error.message}`;
+    calendarBadge.textContent = 'Error';
+    calendarList.innerHTML = `<div><strong>Calendar load failed</strong><span class="muted">${escapeHtml(error.message)}</span></div>`;
   }
 }
 
 notes.addEventListener('input', () => {
   localStorage.setItem('mission-control-notes', notes.value);
 });
-refreshButton.addEventListener('click', refreshDashboard);
-loadNotes();
-refreshDashboard();
-ext.textContent = `API error: ${error.message}`;
-    openclawOutput.textContent = `Failed to load /api/dashboard\n${error.message}`;
-  }
-}
 
-notes.addEventListener('input', () => {
-  localStorage.setItem('mission-control-notes', notes.value);
-});
 refreshButton.addEventListener('click', refreshDashboard);
 loadNotes();
 refreshDashboard();
