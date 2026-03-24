@@ -33,7 +33,16 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function setHtml(el, html) {
+  if (el) el.innerHTML = html;
+}
+
+function setText(el, text) {
+  if (el) el.textContent = text;
+}
+
 function renderStats(stats) {
+  if (!statsGrid) return;
   statsGrid.innerHTML = stats
     .map(
       (stat) => `
@@ -48,6 +57,7 @@ function renderStats(stats) {
 }
 
 function renderPriorities(priorities) {
+  if (!priorityList) return;
   if (!priorities.length) {
     priorityList.innerHTML = '<li><strong>All clear</strong><span class="muted">No immediate priorities detected.</span></li>';
     return;
@@ -65,6 +75,7 @@ function renderPriorities(priorities) {
 }
 
 function renderLog(entries) {
+  if (!opsLog) return;
   opsLog.innerHTML = entries
     .map(
       (entry) => `
@@ -88,39 +99,49 @@ function renderGit(changes) {
 }
 
 function renderWorkspace(workspace) {
+  if (!workspaceInfo) return;
   const disk = workspace.disk || {};
   const items = [
     `<div><strong>Path</strong><span class="muted">${escapeHtml(workspace.path || '')}</span></div>`,
     `<div><strong>Disk</strong><span class="muted">${escapeHtml(String(disk.usedGb || '?'))} GB used / ${escapeHtml(String(disk.totalGb || '?'))} GB total</span></div>`,
-    ...(workspace.topLevel || []).map((item) => `<div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.type)}</span></div>`)
+    ...(workspace.topLevel || []).map(
+      (item) => `<div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.type)}</span></div>`
+    )
   ];
   workspaceInfo.innerHTML = items.join('');
 }
 
 function renderMemory(memory) {
+  if (!memoryFeed) return;
   if (!memory.length) {
     memoryFeed.innerHTML = '<div class="muted">No memory files found yet.</div>';
     return;
   }
   memoryFeed.innerHTML = memory
-    .map((entry) => `<div><strong>${escapeHtml(entry.file)}</strong><span class="muted">${escapeHtml((entry.highlights || []).join(' • ') || 'No highlights extracted.')}</span></div>`)
+    .map(
+      (entry) => `<div><strong>${escapeHtml(entry.file)}</strong><span class="muted">${escapeHtml((entry.highlights || []).join(' • ') || 'No highlights extracted.')}</span></div>`
+    )
     .join('');
 }
 
 function renderReminders(reminders) {
-  reminderBadge.textContent = `${reminders.length} job${reminders.length === 1 ? '' : 's'}`;
+  setText(reminderBadge, `${reminders.length} job${reminders.length === 1 ? '' : 's'}`);
+  if (!reminderList) return;
   if (!reminders.length) {
     reminderList.innerHTML = '<div><strong>No reminders yet</strong><span class="muted">Add jobs with OpenClaw cron and they will appear here.</span></div>';
     return;
   }
   reminderList.innerHTML = reminders
-    .map((item) => `<div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.when)} · ${escapeHtml(item.enabled ? 'enabled' : 'disabled')} · ${escapeHtml(item.delivery)}</span></div>`)
+    .map(
+      (item) => `<div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.when)} · ${escapeHtml(item.enabled ? 'enabled' : 'disabled')} · ${escapeHtml(item.delivery)}</span></div>`
+    )
     .join('');
 }
 
 function renderCalendar(events, source, error) {
   const sourceLabel = source === 'google' ? 'Google' : 'Config';
-  calendarBadge.textContent = `${events.length} · ${sourceLabel}`;
+  setText(calendarBadge, `${events.length} · ${sourceLabel}`);
+  if (!calendarList) return;
 
   if (!events.length) {
     const emptyMessage = source === 'google'
@@ -134,12 +155,14 @@ function renderCalendar(events, source, error) {
   }
 
   calendarList.innerHTML = events
-    .map((event) => `
-      <div>
-        <strong>${escapeHtml(event.title || 'Event')}</strong>
-        <span class="muted">${escapeHtml(event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span>
-      </div>
-    `)
+    .map(
+      (event) => `
+        <div>
+          <strong>${escapeHtml(event.title || 'Event')}</strong>
+          <span class="muted">${escapeHtml(event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span>
+        </div>
+      `
+    )
     .join('');
 
   if (error) {
@@ -148,38 +171,47 @@ function renderCalendar(events, source, error) {
 }
 
 function renderProjects(repos) {
-  projectBadge.textContent = `${repos.length} repo${repos.length === 1 ? '' : 's'}`;
+  setText(projectBadge, `${repos.length} repo${repos.length === 1 ? '' : 's'}`);
+  if (!projectList) return;
   if (!repos.length) {
     projectList.innerHTML = '<div><strong>No repos configured</strong><span class="muted">Add repo paths in mission-control/config.json.</span></div>';
     return;
   }
   projectList.innerHTML = repos
-    .map((repo) => `<div><strong>${escapeHtml(repo.name)}</strong><span class="muted">${escapeHtml(repo.branch || 'unknown')} @ ${escapeHtml(repo.head || 'n/a')} · ${escapeHtml(repo.detail || '')}</span></div>`)
+    .map(
+      (repo) => `<div><strong>${escapeHtml(repo.name)}</strong><span class="muted">${escapeHtml(repo.branch || 'unknown')} @ ${escapeHtml(repo.head || 'n/a')} · ${escapeHtml(repo.detail || '')}</span></div>`
+    )
     .join('');
 }
 
 function renderServices(services) {
   const okCount = services.filter((service) => service.ok).length;
-  serviceBadge.textContent = `${okCount}/${services.length}`;
+  setText(serviceBadge, `${okCount}/${services.length}`);
+  if (!serviceList) return;
   if (!services.length) {
     serviceList.innerHTML = '<div><strong>No service checks configured</strong><span class="muted">Add command-based checks in mission-control/config.json.</span></div>';
     return;
   }
   serviceList.innerHTML = services
-    .map((service) => `<div><strong>${escapeHtml(service.name)}</strong><span class="muted">${escapeHtml(service.ok ? 'OK' : 'Issue')} · ${escapeHtml(service.detail || '')}</span></div>`)
+    .map(
+      (service) => `<div><strong>${escapeHtml(service.name)}</strong><span class="muted">${escapeHtml(service.ok ? 'OK' : 'Issue')} · ${escapeHtml(service.detail || '')}</span></div>`
+    )
     .join('');
 }
 
 function renderQuickActions(actions) {
+  if (!quickActions) return;
   quickActions.innerHTML = actions
-    .map((action) => `<button class="secondary action-button" data-action-id="${escapeHtml(action.id)}">${escapeHtml(action.label)}</button>`)
+    .map(
+      (action) => `<button class="secondary action-button" data-action-id="${escapeHtml(action.id)}">${escapeHtml(action.label)}</button>`
+    )
     .join('');
 
   quickActions.querySelectorAll('[data-action-id]').forEach((button) => {
     button.addEventListener('click', async () => {
       const actionId = button.getAttribute('data-action-id');
       button.disabled = true;
-      actionOutput.textContent = `Running ${actionId}...`;
+      setText(actionOutput, `Running ${actionId}...`);
       try {
         const response = await fetch('/api/action', {
           method: 'POST',
@@ -194,9 +226,9 @@ function renderQuickActions(actions) {
           ...(result.stdout || []),
           ...((result.stderr || []).length ? ['', '[stderr]', ...(result.stderr || [])] : [])
         ];
-        actionOutput.textContent = lines.join('\n').trim();
+        setText(actionOutput, lines.join('\n').trim());
       } catch (error) {
-        actionOutput.textContent = `Action failed: ${error.message}`;
+        setText(actionOutput, `Action failed: ${error.message}`);
       } finally {
         button.disabled = false;
       }
@@ -205,13 +237,15 @@ function renderQuickActions(actions) {
 }
 
 function loadNotes() {
+  if (!notes) return;
   const saved = localStorage.getItem('mission-control-notes');
   if (saved) notes.value = saved;
 }
 
 async function refreshDashboard() {
-  modeLabel.textContent = 'Refreshing';
-  modeSubtext.textContent = 'Pulling a fresh local snapshot…';
+  setText(modeLabel, 'Refreshing');
+  setText(modeSubtext, 'Pulling a fresh local snapshot…');
+
   try {
     const response = await fetch('/api/dashboard', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -229,35 +263,36 @@ async function refreshDashboard() {
     renderServices(data.services || []);
     renderQuickActions(data.quickActions || []);
 
-    openclawOutput.textContent = ((data.openclaw && data.openclaw.summary) || ['No status output']).join('\n');
+    setText(openclawOutput, ((data.openclaw && data.openclaw.summary) || ['No status output']).join('\n'));
     const generatedAt = new Date(data.generatedAt);
-    generatedAtBadge.textContent = `Updated ${generatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-    hostInfo.textContent = `${data.host.hostname} · ${data.host.os}`;
-    configPath.textContent = data.configPath || 'mission-control/config.json';
-    modeLabel.textContent = (data.openclaw && data.openclaw.ok) ? 'Nominal' : 'Needs attention';
-    modeSubtext.textContent = (data.openclaw && data.openclaw.ok)
-      ? 'Live data loaded from local commands and config.'
-      : 'Dashboard loaded, but at least one backend check failed.';
+    setText(generatedAtBadge, `Updated ${generatedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+    setText(hostInfo, `${data.host.hostname} · ${data.host.os}`);
+    setText(configPath, data.configPath || 'mission-control/config.json');
+    setText(modeLabel, (data.openclaw && data.openclaw.ok) ? 'Nominal' : 'Needs attention');
+    setText(
+      modeSubtext,
+      (data.openclaw && data.openclaw.ok)
+        ? 'Live data loaded from local commands and config.'
+        : 'Dashboard loaded, but at least one backend check failed.'
+    );
   } catch (error) {
-    modeLabel.textContent = 'Offline';
-    modeSubtext.textContent = `API error: ${error.message}`;
-    openclawOutput.textContent = `Failed to load /api/dashboard\n${error.message}`;
-    calendarBadge.textContent = 'Error';
-    calendarList.innerHTML = `<div><strong>Calendar load failed</strong><span class="muted">${escapeHtml(error.message)}</span></div>`;
+    setText(modeLabel, 'Offline');
+    setText(modeSubtext, `API error: ${error.message}`);
+    setText(openclawOutput, `Failed to load /api/dashboard\n${error.message}`);
+    setText(calendarBadge, 'Error');
+    setHtml(calendarList, `<div><strong>Calendar load failed</strong><span class="muted">${escapeHtml(error.message)}</span></div>`);
   }
 }
 
-notes.addEventListener('input', () => {
-  localStorage.setItem('mission-control-notes', notes.value);
-});
+if (notes) {
+  notes.addEventListener('input', () => {
+    localStorage.setItem('mission-control-notes', notes.value);
+  });
+}
 
-refreshButton.addEventListener('click', refreshDashboard);
-loadNotes();
-refreshDashboard();
-ard();
-trol-notes', notes.value);
-});
+if (refreshButton) {
+  refreshButton.addEventListener('click', refreshDashboard);
+}
 
-refreshButton.addEventListener('click', refreshDashboard);
 loadNotes();
 refreshDashboard();
