@@ -1,10 +1,12 @@
 # Google Calendar setup for Mission Control
 
-Goal: connect Mike's Google account (`michael.coen@gmail.com`) and create or reuse a calendar named `OpenClaw`.
+Goal: connect Mike's Google account (`michael.coen@gmail.com`) and use the **primary Google Calendar** in the dashboard.
 
-## What I already prepared
+The setup script also creates or reuses a secondary calendar named `OpenClaw` so you have a dedicated calendar available if you want it later, but the dashboard is currently configured to use `primary`.
 
-- `google_calendar_setup.py` — runs the OAuth flow and creates the calendar if needed
+## What is prepared
+
+- `google_calendar_setup.py` — runs OAuth, ensures the `OpenClaw` calendar exists, and configures the dashboard to use `primary`
 - `google_calendar_fetch.py` — fetches upcoming events from the configured Google calendar
 - `vendor/` — local Python packages for Google Calendar API access
 
@@ -28,13 +30,19 @@ python3 google_calendar_setup.py
 ```
 
 That will:
-- open a browser-based Google login flow
 - authenticate `michael.coen@gmail.com`
-- create or reuse a calendar named `OpenClaw`
 - save OAuth tokens to `token.json`
-- write the chosen calendar ID into `config.json`
+- create or reuse a calendar named `OpenClaw`
+- configure `config.json` to use your **primary** Google Calendar for the dashboard
+
+## Config knobs
+
+In `config.json`:
+
+- `googleCalendar.calendarId` → `primary` for your main calendar, or another Google calendar ID if you want to switch later
+- `googleCalendar.lookaheadDays` → how many upcoming days to show (currently `30`)
 
 ## Notes
 
 - `credentials.json` and `token.json` contain sensitive auth material. Keep them private.
-- If you want, I can next wire `server.py` so the dashboard calendar panel automatically reads from Google Calendar once setup is complete.
+- The dashboard falls back to `calendar[]` only if Google Calendar fetch fails.

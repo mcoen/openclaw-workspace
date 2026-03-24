@@ -1,0 +1,7 @@
+credentials.json
+credentials.json:Zone.Identifier
+token.json
+vendor/
+.venv/
+__pycache__/
+*.pyc
