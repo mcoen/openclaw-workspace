@@ -14,23 +14,24 @@
 
 ## Quick start commands
 ```bash
-export PROJECT_ID="<your-project-id>"
+export PROJECT_ID="Veritext"
 export REGION="us-central1"
 gcloud config set project "$PROJECT_ID"
 gcloud services enable run.googleapis.com sqladmin.googleapis.com redis.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com secretmanager.googleapis.com
 ```
 
-## Build + deploy web
+## Build + deploy web (authenticated)
 ```bash
 cd myveritext-cto
-npm run build
 
-gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/myveritext/myveritext-cto-web:latest"
+gcloud artifacts repositories create myveritext \
+  --repository-format=docker \
+  --location="$REGION" \
+  --description="MyVeritext CTO demo images" || true
 
-gcloud run deploy myveritext-cto-web \
-  --image "$REGION-docker.pkg.dev/$PROJECT_ID/myveritext/myveritext-cto-web:latest" \
-  --region "$REGION" \
-  --allow-unauthenticated
+gcloud builds submit \
+  --config cloudbuild.yaml \
+  --substitutions _REGION="$REGION",_REPO="myveritext"
 ```
 
 ## Demo URL
