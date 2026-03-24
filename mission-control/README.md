@@ -39,7 +39,8 @@ Edit:
 
 Fields:
 
-- `calendar[]` → upcoming events to show on the dashboard
+- `googleCalendar` → Google Calendar connection info written by the setup script
+- `calendar[]` → fallback upcoming events if Google Calendar is unavailable
 - `repos[]` → git repos to track (`name`, `path`)
 - `services[]` → command-based health checks (`name`, `command`)
 

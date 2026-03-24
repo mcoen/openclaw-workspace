@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 WORKSPACE = ROOT.parent
 PORT = int(os.environ.get("MISSION_CONTROL_PORT", "4173"))
 CONFIG_PATH = ROOT / "config.json"
+GOOGLE_CALENDAR_FETCH = ROOT / "google_calendar_fetch.py"
 QUICK_ACTIONS = {
     "openclaw-status": {
         "label": "OpenClaw status",
@@ -121,6 +122,36 @@ def fetch_reminders() -> dict:
     return {"ok": result.get("ok"), "jobs": jobs, "error": result.get("stderr")}
 
 
+def fetch_calendar(config: dict) -> dict:
+    google_cfg = config.get("googleCalendar") or {}
+    fallback = config.get("calendar", [])[:10]
+    if google_cfg.get("enabled") and google_cfg.get("calendarId") and GOOGLE_CALENDAR_FETCH.exists():
+        result = run([sys.executable, str(GOOGLE_CALENDAR_FETCH)], cwd=ROOT, timeout=20)
+        if result.get("ok") and result.get("stdout"):
+            try:
+                events = json.loads(result["stdout"])
+                return {
+                    "events": events[:10],
+                    "source": "google",
+                    "ok": True,
+                    "error": "",
+                }
+            except Exception as exc:
+                return {
+                    "events": fallback,
+                    "source": "config",
+                    "ok": False,
+                    "error": f"Failed to parse Google Calendar response: {exc}",
+                }
+        return {
+            "events": fallback,
+            "source": "config",
+            "ok": False,
+            "error": result.get("stderr") or "Google Calendar fetch failed",
+        }
+    return {"events": fallback, "source": "config", "ok": True, "error": ""}
+
+
 def repo_status(entry: dict) -> dict:
     path = Path(entry.get("path", "")).expanduser()
     if not path.exists():
@@ -186,9 +217,10 @@ def build_payload() -> dict:
     git_head = run(["git", "rev-parse", "--short", "HEAD"], cwd=WORKSPACE)
     openclaw_status = run(["openclaw", "status"], cwd=WORKSPACE)
     reminders = fetch_reminders()
+    calendar_data = fetch_calendar(config)
     repos = [repo_status(entry) for entry in config.get("repos", [])]
     services = [service_status(entry) for entry in config.get("services", [])]
-    calendar = config.get("calendar", [])[:10]
+    calendar = calendar_data.get("events", [])
 
     dirty_lines = [line for line in git_status.get("stdout", "").splitlines() if line.strip()]
     tracked_changes = [line for line in dirty_lines if not line.startswith("?? ")]
@@ -209,10 +241,10 @@ def build_payload() -> dict:
             "tone": "good" if reminders.get("ok") else "danger",
         },
         {
-            "label": "Projects",
-            "value": str(len(repos)),
-            "trend": f"{sum(1 for repo in repos if repo.get('changes'))} with changes",
-            "tone": "neutral",
+            "label": "Calendar",
+            "value": str(len(calendar)),
+            "trend": f"Source: {calendar_data.get('source', 'config')}",
+            "tone": "good" if calendar_data.get("ok") else "warn",
         },
         {
             "label": "Services",
@@ -229,6 +261,8 @@ def build_payload() -> dict:
         priorities.append({"title": "No reminders configured", "detail": "Mission control is ready to surface cron jobs as soon as you add them.", "tone": "neutral"})
     if calendar:
         priorities.append({"title": "Upcoming calendar item", "detail": f"{calendar[0].get('when', 'soon')} · {calendar[0].get('title', 'Event')}", "tone": "neutral"})
+    if not calendar_data.get("ok"):
+        priorities.append({"title": "Google Calendar fallback active", "detail": calendar_data.get("error") or "Using static calendar entries from config.", "tone": "warn"})
     bad_services = [service for service in services if not service.get("ok")]
     if bad_services:
         priorities.append({"title": "Service check needs attention", "detail": f"{len(bad_services)} configured service check(s) failed.", "tone": "danger"})
@@ -240,6 +274,7 @@ def build_payload() -> dict:
         {"time": now.strftime("%I:%M %p"), "text": "Mission control snapshot generated."},
         {"time": "Git", "text": f"Workspace on {git_branch.get('stdout') or 'unknown'} @ {git_head.get('stdout') or 'n/a'}"},
         {"time": "Cron", "text": f"Loaded {len(reminders.get('jobs', []))} reminder job(s)."},
+        {"time": "Calendar", "text": f"Loaded {len(calendar)} event(s) from {calendar_data.get('source', 'config')}."},
         {"time": "Services", "text": f"{healthy_services}/{len(services) or 0} configured checks passed."},
     ]
 
@@ -262,6 +297,8 @@ def build_payload() -> dict:
         "memory": recent_memory(),
         "reminders": [summarize_reminder(job) for job in reminders.get("jobs", [])[:10]],
         "calendar": calendar,
+        "calendarSource": calendar_data.get("source", "config"),
+        "calendarError": calendar_data.get("error", ""),
         "repos": repos,
         "services": services,
         "quickActions": [{"id": key, "label": value["label"]} for key, value in QUICK_ACTIONS.items()],

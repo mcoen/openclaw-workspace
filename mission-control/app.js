@@ -203,7 +203,7 @@ async function refreshDashboard() {
     renderWorkspace(data.workspace || {});
     renderMemory(data.memory || []);
     renderReminders(data.reminders || []);
-    renderCalendar(data.calendar || []);
+    renderCalendar(data.calendar || [], data.calendarSource || 'config', data.calendarError || '');
     renderProjects(data.repos || []);
     renderServices(data.services || []);
     renderQuickActions(data.quickActions || []);
@@ -220,6 +220,17 @@ async function refreshDashboard() {
   } catch (error) {
     modeLabel.textContent = 'Offline';
     modeSubtext.textContent = `API error: ${error.message}`;
+    openclawOutput.textContent = `Failed to load /api/dashboard\n${error.message}`;
+  }
+}
+
+notes.addEventListener('input', () => {
+  localStorage.setItem('mission-control-notes', notes.value);
+});
+refreshButton.addEventListener('click', refreshDashboard);
+loadNotes();
+refreshDashboard();
+ext.textContent = `API error: ${error.message}`;
     openclawOutput.textContent = `Failed to load /api/dashboard\n${error.message}`;
   }
 }
