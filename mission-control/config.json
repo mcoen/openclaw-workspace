@@ -26,5 +26,10 @@
       "name": "OpenClaw health",
       "command": "openclaw health"
     }
-  ]
+  ],
+  "googleCalendar": {
+    "enabled": true,
+    "calendarId": "primary",
+    "accountHint": "michael.coen@gmail.com"
+  }
 }
