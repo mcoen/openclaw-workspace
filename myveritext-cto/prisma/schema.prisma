@@ -1,0 +1,159 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  ATTORNEY
+  PARALEGAL
+  REPORTER
+}
+
+enum JobStatus {
+  DRAFT
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum RecordType {
+  TRANSCRIPT
+  EXHIBIT
+}
+
+enum RecordStatus {
+  PROCESSING
+  READY
+  ARCHIVED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  DOWNLOAD
+  SEARCH
+  SUMMARIZE
+}
+
+model Organization {
+  id          String      @id @default(cuid())
+  name        String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  users       User[]
+  matters     Matter[]
+  auditEvents AuditEvent[]
+}
+
+model User {
+  id             String             @id @default(cuid())
+  organizationId String
+  email          String             @unique
+  displayName    String
+  role           UserRole
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships    MatterMembership[]
+  auditEvents    AuditEvent[]
+}
+
+model Matter {
+  id               String             @id @default(cuid())
+  organizationId   String
+  referenceNumber  String
+  title            String
+  venue            String?
+  caseType         String?
+  openedAt         DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jobs             Job[]
+  records          Record[]
+  memberships      MatterMembership[]
+  auditEvents      AuditEvent[]
+
+  @@unique([organizationId, referenceNumber])
+}
+
+model MatterMembership {
+  id        String   @id @default(cuid())
+  matterId  String
+  userId    String
+  role      UserRole
+  createdAt DateTime @default(now())
+
+  matter    Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matterId, userId])
+}
+
+model Job {
+  id             String    @id @default(cuid())
+  matterId       String
+  scheduledStart DateTime
+  scheduledEnd   DateTime?
+  location       String?
+  remoteUrl      String?
+  status         JobStatus @default(DRAFT)
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  matter         Matter    @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId, scheduledStart])
+}
+
+model Record {
+  id              String       @id @default(cuid())
+  matterId         String
+  type             RecordType
+  title            String
+  storagePath      String
+  originalFileName String
+  mimeType         String?
+  sizeBytes        BigInt?
+  status           RecordStatus @default(PROCESSING)
+  version          Int           @default(1)
+  uploadedById     String
+  uploadedAt       DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  matter           Matter        @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId, type, status])
+}
+
+model AuditEvent {
+  id             String      @id @default(cuid())
+  organizationId String
+  matterId        String?
+  actorUserId     String?
+  action          AuditAction
+  entityType      String
+  entityId        String
+  metadataJson    Json?
+  createdAt       DateTime    @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  matter          Matter?      @relation(fields: [matterId], references: [id], onDelete: SetNull)
+  actorUser       User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([matterId, createdAt])
+}

@@ -67,8 +67,8 @@ export default function Home() {
         <section className="rounded-2xl border border-sky-800/60 bg-sky-950/40 p-6 text-sm text-sky-100">
           <p className="font-semibold">Current status</p>
           <p className="mt-2">
-            Project scaffold complete. Next steps are schema + APIs + role model + upload
-            pipeline + GCP deploy pipeline.
+            Data model and API scaffolding are now in place. See <code>docs/DB-SCHEMA.md</code>
+            and <code>docs/OBJECT-MODEL.md</code> for visuals used in the CTO narrative.
           </p>
         </section>
       </div>

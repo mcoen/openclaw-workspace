@@ -21,9 +21,13 @@ Open http://localhost:3000
 - `docs/ARCHITECTURE.md`
 - `docs/DELIVERY-PLAN.md`
 - `docs/GCP-DEPLOY.md`
+- `docs/DB-SCHEMA.md` (ER diagram)
+- `docs/OBJECT-MODEL.md` (class/object model)
 
 ## Current implementation status
 - ✅ Next.js scaffold
 - ✅ Demo landing/control panel
 - ✅ Architecture and delivery docs
-- 🔄 In progress: data model, APIs, RBAC, AI/search, Cloud Run deployment
+- ✅ Prisma schema (organizations, matters, jobs, records, memberships, audit)
+- ✅ API scaffolding (`/api/matters`, `/api/jobs`, `/api/jobs/:id/status`)
+- 🔄 In progress: RBAC enforcement, transcript/exhibit pipelines, AI endpoints
