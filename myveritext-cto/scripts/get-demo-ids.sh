@@ -5,8 +5,8 @@ set -euo pipefail
 # Prints IDs needed for smoke tests and demo calls.
 
 if [[ -z "${DATABASE_URL:-}" ]]; then
-  echo "DATABASE_URL is not set."
-  echo "Example: export DATABASE_URL='postgresql://user:pass@host:5432/db?schema=public'"
+  >&2 echo "DATABASE_URL is not set."
+  >&2 echo "Example: export DATABASE_URL='postgresql://user:pass@host:5432/db?schema=public'"
   exit 1
 fi
 
