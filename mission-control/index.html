@@ -12,13 +12,14 @@
         <div>
           <p class="eyebrow">Mission Control</p>
           <h1>Hank's Dashboard</h1>
-          <p class="muted">A lightweight command view for Mike.</p>
+          <p class="muted">A local command view for Mike, backed by live workspace data.</p>
         </div>
 
         <nav class="nav">
           <a href="#overview">Overview</a>
           <a href="#status">Status</a>
           <a href="#priorities">Priorities</a>
+          <a href="#details">Details</a>
           <a href="#ops">Ops Log</a>
         </nav>
 
@@ -26,9 +27,14 @@
           <p class="panel-label">Current mode</p>
           <div class="mode-row">
             <span class="dot"></span>
-            <strong>Nominal</strong>
+            <strong id="modeLabel">Loading…</strong>
           </div>
-          <p class="muted small">Static starter dashboard — ready to wire into real data.</p>
+          <p id="modeSubtext" class="muted small">Fetching live dashboard state.</p>
+        </section>
+
+        <section class="panel compact">
+          <p class="panel-label">Host</p>
+          <div id="hostInfo" class="muted small">Waiting for API…</div>
         </section>
       </aside>
 
@@ -36,10 +42,12 @@
         <header class="hero" id="overview">
           <div>
             <p class="eyebrow">System overview</p>
-            <h2>Everything important, one screen.</h2>
-            <p class="muted">Use this as the front page for status, tasks, reminders, and recent activity.</p>
+            <h2>One screen. Real signals.</h2>
+            <p class="muted">Live snapshot of workspace state, OpenClaw health, git activity, and recent memory.</p>
           </div>
-          <button id="refreshButton">Refresh snapshot</button>
+          <div class="button-row">
+            <button id="refreshButton">Refresh snapshot</button>
+          </div>
         </header>
 
         <section class="stats-grid" id="status"></section>
@@ -48,7 +56,7 @@
           <article class="panel" id="priorities">
             <div class="panel-head">
               <h3>Priority queue</h3>
-              <span class="badge">Today</span>
+              <span class="badge">Live</span>
             </div>
             <ul id="priorityList" class="stack-list"></ul>
           </article>
@@ -56,18 +64,52 @@
           <article class="panel">
             <div class="panel-head">
               <h3>Quick notes</h3>
-              <span class="badge subtle">Editable</span>
+              <span class="badge subtle">Saved locally</span>
             </div>
             <textarea id="notes" rows="10" placeholder="Drop scratch notes here..."></textarea>
+          </article>
+        </section>
+
+        <section class="three-up" id="details">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Git changes</h3>
+              <span class="badge subtle" id="gitSummaryBadge">—</span>
+            </div>
+            <div id="gitChanges" class="mono-list empty-state">No data yet.</div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Workspace</h3>
+              <span class="badge subtle">Top level</span>
+            </div>
+            <div id="workspaceInfo" class="stack-list compact-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Recent memory</h3>
+              <span class="badge subtle">Files</span>
+            </div>
+            <div id="memoryFeed" class="stack-list compact-list"></div>
           </article>
         </section>
 
         <section class="panel" id="ops">
           <div class="panel-head">
             <h3>Operations log</h3>
-            <span class="badge">Recent</span>
+            <span id="generatedAtBadge" class="badge">Recent</span>
           </div>
           <div id="opsLog" class="log"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>OpenClaw status excerpt</h3>
+            <span class="badge subtle">CLI</span>
+          </div>
+          <pre id="openclawOutput" class="terminal">Loading…</pre>
         </section>
       </main>
     </div>
