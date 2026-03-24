@@ -1,11 +1,14 @@
 # Mission Control Dashboard
 
-A lightweight local dashboard scaffold for Mike and Hank, now backed by a tiny local API.
+A lightweight local dashboard for Mike and Hank, backed by a tiny local API.
 
-## What it includes
+## What it includes now
 
-- Responsive single-page dashboard
-- Live snapshot from local commands
+- Live OpenClaw reminder / cron job panel
+- Config-backed calendar panel
+- Project cards for configured git repos
+- Service health checks for configured commands
+- Safe quick-action buttons for common local commands
 - Git branch, HEAD, and working tree changes
 - OpenClaw status excerpt
 - Workspace summary and disk usage
@@ -14,9 +17,8 @@ A lightweight local dashboard scaffold for Mike and Hank, now backed by a tiny l
 
 ## Run it
 
-From this directory:
-
 ```bash
+cd /home/mcoen/.openclaw/workspace/mission-control
 python3 server.py
 ```
 
@@ -27,10 +29,39 @@ Then open:
 ## API
 
 - `GET /api/dashboard` → JSON snapshot used by the UI
+- `POST /api/action` → run a fixed safe quick action
 
-## Good next upgrades
+## Config
 
-- Add cron/reminder data if you want mission control to surface upcoming alerts
-- Add calendar/tasks modules
-- Add service checks for anything you run locally
-- Add quick actions for common workflows
+Edit:
+
+`/home/mcoen/.openclaw/workspace/mission-control/config.json`
+
+Fields:
+
+- `calendar[]` → upcoming events to show on the dashboard
+- `repos[]` → git repos to track (`name`, `path`)
+- `services[]` → command-based health checks (`name`, `command`)
+
+Example:
+
+```json
+{
+  "calendar": [
+    { "title": "Doctor", "when": "2026-03-25 14:00", "detail": "Bring paperwork" }
+  ],
+  "repos": [
+    { "name": "workspace", "path": "/home/mcoen/.openclaw/workspace" }
+  ],
+  "services": [
+    { "name": "Gateway", "command": "openclaw gateway status" }
+  ]
+}
+```
+
+## Quick actions included
+
+- OpenClaw status
+- List reminders
+- Git status
+- Gateway status

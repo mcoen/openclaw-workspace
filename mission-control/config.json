@@ -1,0 +1,30 @@
+{
+  "calendar": [
+    {
+      "title": "Plan the week",
+      "when": "2026-03-24 09:00",
+      "detail": "Placeholder event. Replace or extend these with your real upcoming events."
+    },
+    {
+      "title": "Mission control review",
+      "when": "2026-03-24 16:00",
+      "detail": "Decide which modules deserve permanent home-screen space."
+    }
+  ],
+  "repos": [
+    {
+      "name": "workspace",
+      "path": "/home/mcoen/.openclaw/workspace"
+    }
+  ],
+  "services": [
+    {
+      "name": "OpenClaw gateway",
+      "command": "openclaw gateway status"
+    },
+    {
+      "name": "OpenClaw health",
+      "command": "openclaw health"
+    }
+  ]
+}

@@ -12,14 +12,17 @@
         <div>
           <p class="eyebrow">Mission Control</p>
           <h1>Hank's Dashboard</h1>
-          <p class="muted">A local command view for Mike, backed by live workspace data.</p>
+          <p class="muted">A local command view for Mike, backed by live workspace and OpenClaw data.</p>
         </div>
 
         <nav class="nav">
           <a href="#overview">Overview</a>
-          <a href="#status">Status</a>
           <a href="#priorities">Priorities</a>
-          <a href="#details">Details</a>
+          <a href="#reminders">Reminders</a>
+          <a href="#calendar">Calendar</a>
+          <a href="#projects">Projects</a>
+          <a href="#services">Services</a>
+          <a href="#actions">Quick actions</a>
           <a href="#ops">Ops Log</a>
         </nav>
 
@@ -36,14 +39,19 @@
           <p class="panel-label">Host</p>
           <div id="hostInfo" class="muted small">Waiting for API…</div>
         </section>
+
+        <section class="panel compact">
+          <p class="panel-label">Config</p>
+          <div id="configPath" class="muted small">mission-control/config.json</div>
+        </section>
       </aside>
 
       <main class="content">
         <header class="hero" id="overview">
           <div>
             <p class="eyebrow">System overview</p>
-            <h2>One screen. Real signals.</h2>
-            <p class="muted">Live snapshot of workspace state, OpenClaw health, git activity, and recent memory.</p>
+            <h2>Mission control, now with real modules.</h2>
+            <p class="muted">Live snapshot of reminders, projects, services, workspace state, and quick operational shortcuts.</p>
           </div>
           <div class="button-row">
             <button id="refreshButton">Refresh snapshot</button>
@@ -67,6 +75,60 @@
               <span class="badge subtle">Saved locally</span>
             </div>
             <textarea id="notes" rows="10" placeholder="Drop scratch notes here..."></textarea>
+          </article>
+        </section>
+
+        <section class="two-up equal-panels">
+          <article class="panel" id="reminders">
+            <div class="panel-head">
+              <h3>Reminders / cron jobs</h3>
+              <span id="reminderBadge" class="badge subtle">—</span>
+            </div>
+            <div id="reminderList" class="stack-list compact-list"></div>
+          </article>
+
+          <article class="panel" id="calendar">
+            <div class="panel-head">
+              <h3>Calendar</h3>
+              <span class="badge subtle">Config-backed</span>
+            </div>
+            <div id="calendarList" class="stack-list compact-list"></div>
+          </article>
+        </section>
+
+        <section class="two-up equal-panels">
+          <article class="panel" id="projects">
+            <div class="panel-head">
+              <h3>Projects</h3>
+              <span id="projectBadge" class="badge subtle">—</span>
+            </div>
+            <div id="projectList" class="stack-list compact-list"></div>
+          </article>
+
+          <article class="panel" id="services">
+            <div class="panel-head">
+              <h3>Service health</h3>
+              <span id="serviceBadge" class="badge subtle">—</span>
+            </div>
+            <div id="serviceList" class="stack-list compact-list"></div>
+          </article>
+        </section>
+
+        <section class="two-up equal-panels" id="actions">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Quick actions</h3>
+              <span class="badge">Safe</span>
+            </div>
+            <div id="quickActions" class="button-grid"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Action output</h3>
+              <span class="badge subtle">Local command</span>
+            </div>
+            <pre id="actionOutput" class="terminal">Run a quick action to see output here.</pre>
           </article>
         </section>
 
