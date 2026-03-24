@@ -198,8 +198,12 @@ class Handler(SimpleHTTPRequestHandler):
         sys.stderr.write("[mission-control] " + (fmt % args) + "\n")
 
 
+class ReusableTCPServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+
+
 if __name__ == "__main__":
     os.chdir(ROOT)
-    with socketserver.ThreadingTCPServer(("127.0.0.1", PORT), Handler) as httpd:
+    with ReusableTCPServer(("127.0.0.1", PORT), Handler) as httpd:
         print(f"Mission Control running at http://127.0.0.1:{PORT}")
         httpd.serve_forever()
