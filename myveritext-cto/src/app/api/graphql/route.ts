@@ -1,0 +1,18 @@
+import { createYoga } from "graphql-yoga";
+import { schema } from "@/lib/graphql/schema";
+const yoga = createYoga({
+  schema,
+  graphqlEndpoint: "/api/graphql",
+});
+
+export async function GET(request: Request) {
+  return yoga.fetch(request);
+}
+
+export async function POST(request: Request) {
+  return yoga.fetch(request);
+}
+
+export async function OPTIONS(request: Request) {
+  return yoga.fetch(request);
+}

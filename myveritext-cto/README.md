@@ -23,7 +23,8 @@ Open http://localhost:3000
 - `docs/GCP-DEPLOY.md`
 - `docs/DB-SCHEMA.md` (ER diagram)
 - `docs/OBJECT-MODEL.md` (class/object model)
-- `docs/API-DEMO.md` (endpoint + header usage)
+- `docs/API-DEMO.md` (REST endpoint + header usage)
+- `docs/GRAPHQL-DEMO.md` (GraphQL endpoint and examples)
 
 ## Current implementation status
 - ✅ Next.js scaffold

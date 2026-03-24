@@ -22,8 +22,17 @@ Pass a seeded user id in request header:
 - `GET /api/records`
 - `POST /api/records`
 
+### Search
+- `GET /api/search?q=<query>&matterId=<optional>`
+
+### Records upload URL scaffold
+- `POST /api/records/upload-url`
+
 ### AI Summary
 - `POST /api/ai/summary`
+
+### GraphQL
+- `POST /api/graphql`
 
 ## Sample summary request
 ```bash
