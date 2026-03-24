@@ -78,7 +78,8 @@ function renderLog(entries) {
 }
 
 function renderGit(changes) {
-  gitSummaryBadge.textContent = `${changes.length} item${changes.length === 1 ? '' : 's'}`;
+  setText(gitSummaryBadge, `${changes.length} item${changes.length === 1 ? '' : 's'}`);
+  if (!gitChanges) return;
   if (!changes.length) {
     gitChanges.innerHTML = '<div class="muted">Working tree clean.</div>';
     return;
@@ -248,6 +249,13 @@ async function refreshDashboard() {
 
 notes.addEventListener('input', () => {
   localStorage.setItem('mission-control-notes', notes.value);
+});
+
+refreshButton.addEventListener('click', refreshDashboard);
+loadNotes();
+refreshDashboard();
+ard();
+trol-notes', notes.value);
 });
 
 refreshButton.addEventListener('click', refreshDashboard);
