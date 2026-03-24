@@ -27,6 +27,9 @@ Open http://localhost:3000
 - `docs/GRAPHQL-DEMO.md` (GraphQL endpoint and examples)
 - `docs/DEMO-RUNBOOK.md` (Friday live demo sequence)
 - `docs/CTO-TALK-TRACK.md` (interview narrative)
+- `docs/7-MINUTE-SCRIPT.md` (verbatim demo script)
+- `scripts/get-demo-ids.sh` (fetch seeded IDs)
+- `scripts/rehearsal.sh` (full API rehearsal)
 
 ## Current implementation status
 - ✅ Next.js scaffold
