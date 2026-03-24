@@ -17,6 +17,8 @@ const reminderList = document.getElementById('reminderList');
 const reminderBadge = document.getElementById('reminderBadge');
 const calendarList = document.getElementById('calendarList');
 const calendarBadge = document.getElementById('calendarBadge');
+const nextEventCard = document.getElementById('nextEventCard');
+const nextEventBadge = document.getElementById('nextEventBadge');
 const projectList = document.getElementById('projectList');
 const projectBadge = document.getElementById('projectBadge');
 const serviceList = document.getElementById('serviceList');
@@ -138,6 +140,23 @@ function renderReminders(reminders) {
     .join('');
 }
 
+function renderNextEvent(nextEvent, source) {
+  const sourceLabel = source === 'google' ? 'Google Calendar' : 'Config';
+  setText(nextEventBadge, sourceLabel);
+  if (!nextEventCard) return;
+
+  if (!nextEvent) {
+    nextEventCard.innerHTML = '<div class="muted">No upcoming event found.</div>';
+    return;
+  }
+
+  nextEventCard.innerHTML = `
+    <div class="next-event-time">${escapeHtml(nextEvent.whenDisplay || nextEvent.when || 'TBD')}</div>
+    <div class="next-event-title">${escapeHtml(nextEvent.title || 'Event')}</div>
+    <div class="muted">${escapeHtml(nextEvent.detail || 'No additional details.')}</div>
+  `;
+}
+
 function renderCalendar(events, source, error) {
   const sourceLabel = source === 'google' ? 'Google' : 'Config';
   setText(calendarBadge, `${events.length} · ${sourceLabel}`);
@@ -159,7 +178,7 @@ function renderCalendar(events, source, error) {
       (event) => `
         <div>
           <strong>${escapeHtml(event.title || 'Event')}</strong>
-          <span class="muted">${escapeHtml(event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span>
+          <span class="muted">${escapeHtml(event.whenDisplay || event.when || 'TBD')} · ${escapeHtml(event.detail || '')}</span>
         </div>
       `
     )
@@ -258,6 +277,7 @@ async function refreshDashboard() {
     renderWorkspace(data.workspace || {});
     renderMemory(data.memory || []);
     renderReminders(data.reminders || []);
+    renderNextEvent(data.nextEvent || null, data.calendarSource || 'config');
     renderCalendar(data.calendar || [], data.calendarSource || 'config', data.calendarError || '');
     renderProjects(data.repos || []);
     renderServices(data.services || []);
@@ -280,6 +300,8 @@ async function refreshDashboard() {
     setText(modeSubtext, `API error: ${error.message}`);
     setText(openclawOutput, `Failed to load /api/dashboard\n${error.message}`);
     setText(calendarBadge, 'Error');
+    setText(nextEventBadge, 'Error');
+    setHtml(nextEventCard, `<div class="muted">${escapeHtml(error.message)}</div>`);
     setHtml(calendarList, `<div><strong>Calendar load failed</strong><span class="muted">${escapeHtml(error.message)}</span></div>`);
   }
 }

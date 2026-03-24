@@ -18,6 +18,7 @@
         <nav class="nav">
           <a href="#overview">Overview</a>
           <a href="#priorities">Priorities</a>
+          <a href="#calendar-focus">Next Event</a>
           <a href="#reminders">Reminders</a>
           <a href="#calendar">Calendar</a>
           <a href="#projects">Projects</a>
@@ -59,6 +60,16 @@
         </header>
 
         <section class="stats-grid" id="status"></section>
+
+        <section class="panel next-event-panel" id="calendar-focus">
+          <div class="panel-head">
+            <h3>Next event</h3>
+            <span id="nextEventBadge" class="badge subtle">Calendar</span>
+          </div>
+          <div id="nextEventCard" class="next-event-card">
+            <div class="muted">Loading next event…</div>
+          </div>
+        </section>
 
         <section class="two-up">
           <article class="panel" id="priorities">

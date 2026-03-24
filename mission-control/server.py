@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import shlex
 import shutil
 import socketserver
@@ -122,6 +123,58 @@ def fetch_reminders() -> dict:
     return {"ok": result.get("ok"), "jobs": jobs, "error": result.get("stderr")}
 
 
+def normalize_title(title: str) -> str:
+    title = re.sub(r"^Ticket:\s*", "", title.strip(), flags=re.I)
+    title = re.sub(r"\s+", " ", title)
+    return title.lower()
+
+
+def parse_event_dt(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        if len(value) == 10:
+            return datetime.fromisoformat(value + "T00:00:00")
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def humanize_event_when(value: str | None) -> str:
+    dt = parse_event_dt(value)
+    if not dt:
+        return value or "TBD"
+    if len(value or "") == 10:
+        return dt.strftime("%a, %b %-d")
+    return dt.strftime("%a, %b %-d · %-I:%M %p")
+
+
+def dedupe_calendar_events(events: list[dict]) -> list[dict]:
+    deduped: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for event in events:
+        title = event.get("title", "")
+        when = event.get("when", "")
+        key = (normalize_title(title), when)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(event)
+    return deduped
+
+
+def enrich_calendar_events(events: list[dict]) -> list[dict]:
+    output = []
+    for event in dedupe_calendar_events(events):
+        when = event.get("when")
+        output.append({
+            **event,
+            "whenDisplay": humanize_event_when(when),
+            "sortKey": when or "",
+        })
+    return output
+
+
 def fetch_calendar(config: dict) -> dict:
     google_cfg = config.get("googleCalendar") or {}
     fallback = config.get("calendar", [])[:10]
@@ -129,7 +182,7 @@ def fetch_calendar(config: dict) -> dict:
         result = run([sys.executable, str(GOOGLE_CALENDAR_FETCH)], cwd=ROOT, timeout=20)
         if result.get("ok") and result.get("stdout"):
             try:
-                events = json.loads(result["stdout"])
+                events = enrich_calendar_events(json.loads(result["stdout"]))
                 return {
                     "events": events[:10],
                     "source": "google",
@@ -138,18 +191,18 @@ def fetch_calendar(config: dict) -> dict:
                 }
             except Exception as exc:
                 return {
-                    "events": fallback,
+                    "events": enrich_calendar_events(fallback),
                     "source": "config",
                     "ok": False,
                     "error": f"Failed to parse Google Calendar response: {exc}",
                 }
         return {
-            "events": fallback,
+            "events": enrich_calendar_events(fallback),
             "source": "config",
             "ok": False,
             "error": result.get("stderr") or "Google Calendar fetch failed",
         }
-    return {"events": fallback, "source": "config", "ok": True, "error": ""}
+    return {"events": enrich_calendar_events(fallback), "source": "config", "ok": True, "error": ""}
 
 
 def repo_status(entry: dict) -> dict:
@@ -221,6 +274,7 @@ def build_payload() -> dict:
     repos = [repo_status(entry) for entry in config.get("repos", [])]
     services = [service_status(entry) for entry in config.get("services", [])]
     calendar = calendar_data.get("events", [])
+    next_event = calendar[0] if calendar else None
 
     dirty_lines = [line for line in git_status.get("stdout", "").splitlines() if line.strip()]
     tracked_changes = [line for line in dirty_lines if not line.startswith("?? ")]
@@ -259,8 +313,8 @@ def build_payload() -> dict:
         priorities.append({"title": "Review workspace changes", "detail": f"{len(dirty_lines)} git changes detected in the workspace.", "tone": "warn"})
     if not reminders.get("jobs"):
         priorities.append({"title": "No reminders configured", "detail": "Mission control is ready to surface cron jobs as soon as you add them.", "tone": "neutral"})
-    if calendar:
-        priorities.append({"title": "Upcoming calendar item", "detail": f"{calendar[0].get('when', 'soon')} · {calendar[0].get('title', 'Event')}", "tone": "neutral"})
+    if next_event:
+        priorities.append({"title": "Upcoming calendar item", "detail": f"{next_event.get('whenDisplay', next_event.get('when', 'soon'))} · {next_event.get('title', 'Event')}", "tone": "neutral"})
     if not calendar_data.get("ok"):
         priorities.append({"title": "Google Calendar fallback active", "detail": calendar_data.get("error") or "Using static calendar entries from config.", "tone": "warn"})
     bad_services = [service for service in services if not service.get("ok")]
@@ -299,6 +353,7 @@ def build_payload() -> dict:
         "calendar": calendar,
         "calendarSource": calendar_data.get("source", "config"),
         "calendarError": calendar_data.get("error", ""),
+        "nextEvent": next_event,
         "repos": repos,
         "services": services,
         "quickActions": [{"id": key, "label": value["label"]} for key, value in QUICK_ACTIONS.items()],
