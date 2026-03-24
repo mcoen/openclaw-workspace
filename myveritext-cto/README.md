@@ -25,6 +25,8 @@ Open http://localhost:3000
 - `docs/OBJECT-MODEL.md` (class/object model)
 - `docs/API-DEMO.md` (REST endpoint + header usage)
 - `docs/GRAPHQL-DEMO.md` (GraphQL endpoint and examples)
+- `docs/DEMO-RUNBOOK.md` (Friday live demo sequence)
+- `docs/CTO-TALK-TRACK.md` (interview narrative)
 
 ## Current implementation status
 - ✅ Next.js scaffold
