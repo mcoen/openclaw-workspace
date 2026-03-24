@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mission Control</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Mission Control</p>
+          <h1>Hank's Dashboard</h1>
+          <p class="muted">A lightweight command view for Mike.</p>
+        </div>
+
+        <nav class="nav">
+          <a href="#overview">Overview</a>
+          <a href="#status">Status</a>
+          <a href="#priorities">Priorities</a>
+          <a href="#ops">Ops Log</a>
+        </nav>
+
+        <section class="panel compact">
+          <p class="panel-label">Current mode</p>
+          <div class="mode-row">
+            <span class="dot"></span>
+            <strong>Nominal</strong>
+          </div>
+          <p class="muted small">Static starter dashboard — ready to wire into real data.</p>
+        </section>
+      </aside>
+
+      <main class="content">
+        <header class="hero" id="overview">
+          <div>
+            <p class="eyebrow">System overview</p>
+            <h2>Everything important, one screen.</h2>
+            <p class="muted">Use this as the front page for status, tasks, reminders, and recent activity.</p>
+          </div>
+          <button id="refreshButton">Refresh snapshot</button>
+        </header>
+
+        <section class="stats-grid" id="status"></section>
+
+        <section class="two-up">
+          <article class="panel" id="priorities">
+            <div class="panel-head">
+              <h3>Priority queue</h3>
+              <span class="badge">Today</span>
+            </div>
+            <ul id="priorityList" class="stack-list"></ul>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Quick notes</h3>
+              <span class="badge subtle">Editable</span>
+            </div>
+            <textarea id="notes" rows="10" placeholder="Drop scratch notes here..."></textarea>
+          </article>
+        </section>
+
+        <section class="panel" id="ops">
+          <div class="panel-head">
+            <h3>Operations log</h3>
+            <span class="badge">Recent</span>
+          </div>
+          <div id="opsLog" class="log"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
