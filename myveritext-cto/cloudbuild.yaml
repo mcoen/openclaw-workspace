@@ -16,6 +16,7 @@ steps:
       - --platform=managed
       - --no-allow-unauthenticated
       - --port=8080
+      - --set-env-vars=PRISMA_CLIENT_ENGINE_TYPE=binary
 
 substitutions:
   _REGION: us-central1
