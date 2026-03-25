@@ -53,7 +53,12 @@ export default function Home() {
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-xl font-semibold">Friday MVP Scope</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Friday MVP Scope</h2>
+            <a href="/demo" className="rounded bg-sky-600 px-3 py-2 text-sm font-medium hover:bg-sky-500">
+              Open Live Demo UI
+            </a>
+          </div>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             {fridayScope.map((item) => (
               <li key={item} className="flex items-start gap-2">
