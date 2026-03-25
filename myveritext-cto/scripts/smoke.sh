@@ -6,7 +6,12 @@ if [[ -z "${BASE_URL:-}" || -z "${ADMIN_USER_ID:-}" ]]; then
   exit 1
 fi
 
-header=( -H "Content-Type: application/json" -H "x-user-id: ${ADMIN_USER_ID}" )
+auth_header=()
+if [[ -n "${ID_TOKEN:-}" ]]; then
+  auth_header=( -H "Authorization: Bearer ${ID_TOKEN}" )
+fi
+
+header=( -H "Content-Type: application/json" -H "x-user-id: ${ADMIN_USER_ID}" "${auth_header[@]}" )
 
 echo "[1/5] GET /api/matters"
 curl -sf "${BASE_URL}/api/matters" "${header[@]}" | jq '.data | length' >/dev/null

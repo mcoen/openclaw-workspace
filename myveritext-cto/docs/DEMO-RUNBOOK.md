@@ -55,6 +55,8 @@ Demonstrate technical leadership across UX, reliability, AI, compliance, and arc
 export BASE_URL="https://myveritext-cto-web-dvp6tlh2sa-uc.a.run.app"
 export ADMIN_USER_ID="<seeded-admin-user-id>"
 export MATTER_ID="<seeded-matter-id>"
+# required when Cloud Run service is authenticated
+export ID_TOKEN="$(gcloud auth print-identity-token)"
 ```
 
 ### GraphQL quick query

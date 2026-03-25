@@ -30,12 +30,20 @@ curl -s -X PATCH "$BASE_URL/api/jobs/$JOB_ID/status" \
 
 echo "== 4) Search =="
 curl -s "$BASE_URL/api/search?q=deposition&matterId=$MATTER_ID" \
-  -H "x-user-id: $ADMIN_USER_ID" | jq '.data | {strategy, matterCount:(.matters|length), recordCount:(.records|length)}'
+  "${header[@]}" | jq '.data | {strategy, matterCount:(.matters|length), recordCount:(.records|length)}'
 
 echo "== 5) AI summary =="
 curl -s -X POST "$BASE_URL/api/ai/summary" \
   "${header[@]}" \
   -d "{\"matterId\":\"$MATTER_ID\",\"prompt\":\"Summarize key testimony and next actions\"}" | jq '.data | {summary,confidence,citationCount:(.citations|length)}'
+
+echo "== 6) GraphQL =="
+curl -s -X POST "$BASE_URL/api/graphql" \
+  "${header[@]}" \
+  -d '{"query":"query { matters { id referenceNumber title jobs { id status } } }"}' | jq '.data.matters[0] | {id,referenceNumber,title,jobCount:(.jobs|length)}'
+
+echo "Rehearsal completed."
+ount:(.citations|length)}'
 
 echo "== 6) GraphQL =="
 curl -s -X POST "$BASE_URL/api/graphql" \
