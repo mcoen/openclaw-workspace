@@ -6,14 +6,31 @@ type Matter = {
   id: string;
   referenceNumber: string;
   title: string;
+  venue?: string | null;
+  caseType?: string | null;
+  openedAt?: string;
 };
 
 type Job = {
   id: string;
   status: string;
   scheduledStart: string;
+  location?: string | null;
+  notes?: string | null;
   matterId: string;
 };
+
+type RecordItem = {
+  id: string;
+  matterId: string;
+  type: "TRANSCRIPT" | "EXHIBIT";
+  title: string;
+  originalFileName: string;
+  uploadedAt: string;
+  status: string;
+};
+
+type Activity = { id: string; text: string; at: string };
 
 async function safeJson(resp: Response) {
   const text = await resp.text();
@@ -24,18 +41,35 @@ async function safeJson(resp: Response) {
   }
 }
 
+function statusChip(status: string) {
+  const map: Record<string, string> = {
+    SCHEDULED: "bg-sky-500/20 text-sky-200 border-sky-400/30",
+    IN_PROGRESS: "bg-amber-500/20 text-amber-200 border-amber-400/30",
+    COMPLETED: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
+    CANCELED: "bg-rose-500/20 text-rose-200 border-rose-400/30",
+    READY: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
+    PROCESSING: "bg-violet-500/20 text-violet-200 border-violet-400/30",
+  };
+  return map[status] ?? "bg-slate-500/20 text-slate-200 border-slate-400/30";
+}
+
 export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserId: string; defaultMatterId: string }) {
   const [userId, setUserId] = useState(defaultUserId);
   const [idToken, setIdToken] = useState("");
-  const [matterId, setMatterId] = useState(defaultMatterId);
+
   const [matters, setMatters] = useState<Matter[]>([]);
+  const [matterId, setMatterId] = useState(defaultMatterId);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [records, setRecords] = useState<RecordItem[]>([]);
+
   const [searchQ, setSearchQ] = useState("deposition");
-  const [searchResult, setSearchResult] = useState<string>("");
-  const [summary, setSummary] = useState<string>("");
-  const [graphqlResult, setGraphqlResult] = useState<string>("");
-  const [errorText, setErrorText] = useState<string>("");
-  const [busy, setBusy] = useState<string>("");
+  const [searchResult, setSearchResult] = useState<Array<{ kind: string; title: string; subtitle: string }>>([]);
+  const [summary, setSummary] = useState("");
+  const [graphqlInsight, setGraphqlInsight] = useState("");
+
+  const [errorText, setErrorText] = useState("");
+  const [busy, setBusy] = useState("");
+  const [activity, setActivity] = useState<Activity[]>([]);
 
   const headers = useMemo(() => {
     const h: Record<string, string> = {
@@ -46,14 +80,40 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
     return h;
   }, [userId, idToken]);
 
+  const selectedMatter = matters.find((m) => m.id === matterId);
+  const matterJobs = jobs.filter((j) => j.matterId === matterId).sort((a, b) => +new Date(a.scheduledStart) - +new Date(b.scheduledStart));
+
+  function pushActivity(text: string) {
+    setActivity((prev) => [{ id: crypto.randomUUID(), text, at: new Date().toLocaleTimeString() }, ...prev].slice(0, 8));
+  }
+
   async function refresh() {
     setErrorText("");
-    const mattersResp = await fetch("/api/matters", { headers, cache: "no-store" });
+    setBusy("refresh");
+
+    const [mattersResp, jobsResp, recordsResp] = await Promise.all([
+      fetch("/api/matters", { headers, cache: "no-store" }),
+      fetch("/api/jobs", { headers, cache: "no-store" }),
+      fetch("/api/records", { headers, cache: "no-store" }),
+    ]);
+
     const mattersJson = await safeJson(mattersResp);
+    const jobsJson = await safeJson(jobsResp);
+    const recordsJson = await safeJson(recordsResp);
 
     if (!mattersResp.ok) {
-      setErrorText(`GET /api/matters failed (${mattersResp.status}): ${JSON.stringify(mattersJson).slice(0, 600)}`);
-      setMatters([]);
+      setErrorText(`GET /api/matters failed (${mattersResp.status}): ${JSON.stringify(mattersJson).slice(0, 400)}`);
+      setBusy("");
+      return;
+    }
+    if (!jobsResp.ok) {
+      setErrorText(`GET /api/jobs failed (${jobsResp.status}): ${JSON.stringify(jobsJson).slice(0, 400)}`);
+      setBusy("");
+      return;
+    }
+    if (!recordsResp.ok) {
+      setErrorText(`GET /api/records failed (${recordsResp.status}): ${JSON.stringify(recordsJson).slice(0, 400)}`);
+      setBusy("");
       return;
     }
 
@@ -63,15 +123,10 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
       setMatterId(nextMatters[0].id);
     }
 
-    const jobsResp = await fetch("/api/jobs", { headers, cache: "no-store" });
-    const jobsJson = await safeJson(jobsResp);
-    if (!jobsResp.ok) {
-      setErrorText(`GET /api/jobs failed (${jobsResp.status}): ${JSON.stringify(jobsJson).slice(0, 600)}`);
-      setJobs([]);
-      return;
-    }
-
     setJobs(jobsJson.data ?? []);
+    setRecords(recordsJson.data ?? []);
+    setBusy("");
+    pushActivity("Data refreshed from live APIs");
   }
 
   useEffect(() => {
@@ -80,8 +135,8 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
   }, []);
 
   async function createJob() {
+    if (!matterId) return;
     setBusy("create-job");
-    setErrorText("");
     const resp = await fetch("/api/jobs", {
       method: "POST",
       headers,
@@ -89,58 +144,67 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
         matterId,
         scheduledStart: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         location: "Remote",
-        notes: "UI demo proceeding",
+        notes: "Scheduled from UX rebuild demo",
       }),
     });
     const json = await safeJson(resp);
     if (!resp.ok) {
-      setErrorText(`POST /api/jobs failed (${resp.status}): ${JSON.stringify(json).slice(0, 600)}`);
+      setErrorText(`POST /api/jobs failed (${resp.status}): ${JSON.stringify(json).slice(0, 400)}`);
       setBusy("");
       return;
     }
     await refresh();
     setBusy("");
+    pushActivity("Created a new proceeding from UI");
   }
 
   async function markInProgress() {
-    if (!jobs[0]) return;
-    setBusy("update-job");
-    setErrorText("");
-    const resp = await fetch(`/api/jobs/${jobs[0].id}/status`, {
+    const target = matterJobs[0];
+    if (!target) return;
+    setBusy("status");
+    const resp = await fetch(`/api/jobs/${target.id}/status`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({ status: "IN_PROGRESS" }),
     });
     const json = await safeJson(resp);
     if (!resp.ok) {
-      setErrorText(`PATCH /api/jobs/:id/status failed (${resp.status}): ${JSON.stringify(json).slice(0, 600)}`);
+      setErrorText(`PATCH /api/jobs/:id/status failed (${resp.status}): ${JSON.stringify(json).slice(0, 400)}`);
       setBusy("");
       return;
     }
     await refresh();
     setBusy("");
+    pushActivity("Moved proceeding to IN_PROGRESS");
   }
 
   async function runSearch() {
+    if (!matterId) return;
     setBusy("search");
-    setErrorText("");
     const resp = await fetch(`/api/search?q=${encodeURIComponent(searchQ)}&matterId=${encodeURIComponent(matterId)}`, {
       headers,
       cache: "no-store",
     });
     const json = await safeJson(resp);
     if (!resp.ok) {
-      setErrorText(`GET /api/search failed (${resp.status}): ${JSON.stringify(json).slice(0, 600)}`);
+      setErrorText(`GET /api/search failed (${resp.status}): ${JSON.stringify(json).slice(0, 400)}`);
       setBusy("");
       return;
     }
-    setSearchResult(JSON.stringify(json.data, null, 2));
+
+    const cards = [
+      ...(json.data?.matters ?? []).map((m: Matter) => ({ kind: "Matter", title: m.title, subtitle: m.referenceNumber })),
+      ...(json.data?.records ?? []).map((r: RecordItem) => ({ kind: r.type, title: r.title, subtitle: r.originalFileName })),
+    ].slice(0, 6);
+
+    setSearchResult(cards);
     setBusy("");
+    pushActivity(`Executed search for “${searchQ}”`);
   }
 
   async function runSummary() {
+    if (!matterId) return;
     setBusy("summary");
-    setErrorText("");
     const resp = await fetch("/api/ai/summary", {
       method: "POST",
       headers,
@@ -148,17 +212,18 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
     });
     const json = await safeJson(resp);
     if (!resp.ok) {
-      setErrorText(`POST /api/ai/summary failed (${resp.status}): ${JSON.stringify(json).slice(0, 600)}`);
+      setErrorText(`POST /api/ai/summary failed (${resp.status}): ${JSON.stringify(json).slice(0, 400)}`);
       setBusy("");
       return;
     }
+
     setSummary(json?.data?.summary ?? "No summary returned");
     setBusy("");
+    pushActivity("Generated AI summary with citations");
   }
 
   async function runGraphql() {
     setBusy("graphql");
-    setErrorText("");
     const resp = await fetch("/api/graphql", {
       method: "POST",
       headers,
@@ -166,98 +231,154 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
     });
     const json = await safeJson(resp);
     if (!resp.ok || json.errors) {
-      setErrorText(`POST /api/graphql failed (${resp.status}): ${JSON.stringify(json).slice(0, 600)}`);
+      setErrorText(`POST /api/graphql failed (${resp.status}): ${JSON.stringify(json).slice(0, 400)}`);
       setBusy("");
       return;
     }
-    setGraphqlResult(JSON.stringify(json.data, null, 2));
+
+    const m = json?.data?.matters?.[0];
+    if (m) {
+      setGraphqlInsight(`${m.referenceNumber}: ${m.jobs.length} proceedings loaded in a single query.`);
+    }
     setBusy("");
+    pushActivity("Ran GraphQL cross-entity query");
   }
 
+  const matterRecords = records.filter((r) => r.matterId === matterId).slice(0, 8);
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-        <h2 className="text-lg font-semibold text-sky-200">Demo Credentials / Access</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+        <h2 className="text-lg font-semibold text-sky-200">Session Access</h2>
+        <p className="mt-1 text-sm text-slate-300">Set the same headers your secured Cloud Run API expects.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
             <label className="text-xs text-slate-400">x-user-id</label>
-            <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-slate-400">Bearer ID Token (optional but needed for auth-required Cloud Run)</label>
-            <input value={idToken} onChange={(e) => setIdToken(e.target.value)} className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <label className="text-xs text-slate-400">Bearer ID Token</label>
+            <input value={idToken} onChange={(e) => setIdToken(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
           </div>
         </div>
-        <button onClick={refresh} className="mt-3 rounded border border-slate-600 px-3 py-2 text-sm" disabled={busy !== ""}>
-          Reload Data
+        <button onClick={refresh} className="mt-3 rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800" disabled={busy !== ""}>
+          {busy === "refresh" ? "Refreshing..." : "Reload Workspace"}
         </button>
-        {errorText ? <pre className="mt-3 overflow-auto rounded bg-rose-950/60 p-3 text-xs text-rose-100">{errorText}</pre> : null}
+        {errorText ? <pre className="mt-3 overflow-auto rounded-lg bg-rose-950/50 p-3 text-xs text-rose-100">{errorText}</pre> : null}
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-semibold text-sky-200">Matters & Scheduling</h2>
-        <p className="mt-1 text-sm text-slate-300">Live operations against deployed APIs.</p>
+      <div className="grid gap-6 lg:grid-cols-12">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-sky-300">Matter Workspace</p>
+              <h3 className="mt-1 text-2xl font-semibold">{selectedMatter?.title ?? "No matter selected"}</h3>
+              <p className="text-sm text-slate-400">{selectedMatter?.referenceNumber} · {selectedMatter?.venue ?? "Venue TBD"} · {selectedMatter?.caseType ?? "Case type"}</p>
+            </div>
+            <select
+              value={matterId}
+              onChange={(e) => setMatterId(e.target.value)}
+              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+            >
+              {matters.length === 0 ? <option value="">No matters available</option> : null}
+              {matters.map((m) => (
+                <option key={m.id} value={m.id}>{m.referenceNumber} — {m.title}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="mt-4">
-          <label className="text-xs text-slate-400">Matter</label>
-          <select
-            value={matterId}
-            onChange={(e) => setMatterId(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-          >
-            {matters.length === 0 ? <option value="">No matters loaded</option> : null}
-            {matters.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.referenceNumber} — {m.title}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button onClick={createJob} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium hover:bg-sky-500" disabled={busy !== "" || !matterId}>
+              {busy === "create-job" ? "Creating..." : "Schedule Proceeding"}
+            </button>
+            <button onClick={markInProgress} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium hover:bg-indigo-500" disabled={busy !== "" || matterJobs.length === 0}>
+              {busy === "status" ? "Updating..." : "Mark In Progress"}
+            </button>
+            <button onClick={runGraphql} className="rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800" disabled={busy !== ""}>
+              Run GraphQL Insight
+            </button>
+          </div>
 
-        <div className="mt-4 flex gap-2">
-          <button onClick={createJob} className="rounded bg-sky-600 px-3 py-2 text-sm font-medium" disabled={busy !== "" || !matterId}>
-            {busy === "create-job" ? "Creating..." : "Create Job"}
-          </button>
-          <button onClick={markInProgress} className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium" disabled={busy !== "" || jobs.length === 0}>
-            {busy === "update-job" ? "Updating..." : "Mark Latest In Progress"}
-          </button>
-        </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Upcoming Proceedings</p>
+              <div className="mt-3 space-y-2">
+                {matterJobs.slice(0, 4).map((job) => (
+                  <div key={job.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{new Date(job.scheduledStart).toLocaleString()}</p>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusChip(job.status)}`}>{job.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">{job.location ?? "Location TBD"}</p>
+                  </div>
+                ))}
+                {matterJobs.length === 0 ? <p className="text-xs text-slate-500">No proceedings yet.</p> : null}
+              </div>
+            </article>
 
-        <pre className="mt-4 max-h-56 overflow-auto rounded bg-slate-950 p-3 text-xs text-slate-300">{JSON.stringify(jobs.slice(0, 5), null, 2)}</pre>
-      </section>
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Records (Transcripts + Exhibits)</p>
+              <div className="mt-3 space-y-2">
+                {matterRecords.slice(0, 4).map((record) => (
+                  <div key={record.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{record.title}</p>
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusChip(record.status)}`}>{record.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">{record.originalFileName}</p>
+                  </div>
+                ))}
+                {matterRecords.length === 0 ? <p className="text-xs text-slate-500">No records loaded.</p> : null}
+              </div>
+            </article>
+          </div>
+        </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-semibold text-sky-200">Search, AI, GraphQL</h2>
-        <div className="mt-3 flex gap-2">
-          <input
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-            className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
-            placeholder="Search query"
-          />
-          <button onClick={runSearch} className="rounded bg-emerald-600 px-3 py-2 text-sm" disabled={busy !== "" || !matterId}>
-            Search
-          </button>
-        </div>
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-4">
+          <p className="text-xs uppercase tracking-[0.16em] text-sky-300">AI + Search Assistant</p>
+          <div className="mt-3 flex gap-2">
+            <input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <button onClick={runSearch} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm hover:bg-emerald-500" disabled={busy !== "" || !matterId}>Search</button>
+          </div>
+          <button onClick={runSummary} className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-sm hover:bg-violet-500" disabled={busy !== "" || !matterId}>Generate AI Summary</button>
 
-        <div className="mt-3 flex gap-2">
-          <button onClick={runSummary} className="rounded bg-violet-600 px-3 py-2 text-sm" disabled={busy !== "" || !matterId}>
-            Run AI Summary
-          </button>
-          <button onClick={runGraphql} className="rounded bg-amber-600 px-3 py-2 text-sm" disabled={busy !== ""}>
-            Run GraphQL Query
-          </button>
-        </div>
+          <div className="mt-4 space-y-3">
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Summary</p>
+              <p className="mt-2 text-sm text-slate-200">{summary || "Run AI Summary to populate this panel."}</p>
+            </article>
 
-        <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">Search result</p>
-        <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-950 p-3 text-xs text-slate-300">{searchResult || "(run search)"}</pre>
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Search Results</p>
+              <div className="mt-2 space-y-2">
+                {searchResult.length === 0 ? <p className="text-xs text-slate-500">No search run yet.</p> : null}
+                {searchResult.map((item, idx) => (
+                  <div key={`${item.title}-${idx}`} className="rounded-lg border border-slate-800 bg-slate-900 p-2">
+                    <p className="text-xs text-sky-200">{item.kind}</p>
+                    <p className="text-sm font-medium text-slate-100">{item.title}</p>
+                    <p className="text-xs text-slate-400">{item.subtitle}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
-        <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">AI summary</p>
-        <pre className="mt-1 max-h-24 overflow-auto rounded bg-slate-950 p-3 text-xs text-slate-300">{summary || "(run AI summary)"}</pre>
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-400">GraphQL Insight</p>
+              <p className="mt-2 text-sm text-slate-200">{graphqlInsight || "Run GraphQL Insight to show cross-entity retrieval."}</p>
+            </article>
 
-        <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">GraphQL</p>
-        <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-950 p-3 text-xs text-slate-300">{graphqlResult || "(run GraphQL query)"}</pre>
-      </section>
+            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Activity</p>
+              <div className="mt-2 space-y-1">
+                {activity.length === 0 ? <p className="text-xs text-slate-500">No actions yet.</p> : null}
+                {activity.map((a) => (
+                  <p key={a.id} className="text-xs text-slate-300">[{a.at}] {a.text}</p>
+                ))}
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

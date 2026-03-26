@@ -56,7 +56,7 @@ export default function Home() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Friday MVP Scope</h2>
             <a href="/demo" className="rounded bg-sky-600 px-3 py-2 text-sm font-medium hover:bg-sky-500">
-              Open Live Demo UI
+              Open Rebuilt Product UI
             </a>
           </div>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
