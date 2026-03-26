@@ -43,14 +43,14 @@ async function safeJson(resp: Response) {
 
 function statusChip(status: string) {
   const map: Record<string, string> = {
-    SCHEDULED: "bg-sky-500/20 text-sky-200 border-sky-400/30",
+    SCHEDULED: "bg-sky-500/20 text-sky-700 border-sky-400/30",
     IN_PROGRESS: "bg-amber-500/20 text-amber-200 border-amber-400/30",
     COMPLETED: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
     CANCELED: "bg-rose-500/20 text-rose-200 border-rose-400/30",
     READY: "bg-emerald-500/20 text-emerald-200 border-emerald-400/30",
     PROCESSING: "bg-violet-500/20 text-violet-200 border-violet-400/30",
   };
-  return map[status] ?? "bg-slate-500/20 text-slate-200 border-slate-400/30";
+  return map[status] ?? "bg-slate-500/20 text-slate-700 border-slate-400/30";
 }
 
 export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserId: string; defaultMatterId: string }) {
@@ -248,37 +248,37 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="text-lg font-semibold text-sky-200">Session Access</h2>
-        <p className="mt-1 text-sm text-slate-300">Set the same headers your secured Cloud Run API expects.</p>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-lg font-semibold text-sky-700">Session Access</h2>
+        <p className="mt-1 text-sm text-slate-600">Set the same headers your secured Cloud Run API expects.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div>
-            <label className="text-xs text-slate-400">x-user-id</label>
-            <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <label className="text-xs text-slate-500">x-user-id</label>
+            <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-50 px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-slate-400">Bearer ID Token</label>
-            <input value={idToken} onChange={(e) => setIdToken(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <label className="text-xs text-slate-500">Bearer ID Token</label>
+            <input value={idToken} onChange={(e) => setIdToken(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-50 px-3 py-2 text-sm" />
           </div>
         </div>
-        <button onClick={refresh} className="mt-3 rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800" disabled={busy !== ""}>
+        <button onClick={refresh} className="mt-3 rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-100" disabled={busy !== ""}>
           {busy === "refresh" ? "Refreshing..." : "Reload Workspace"}
         </button>
         {errorText ? <pre className="mt-3 overflow-auto rounded-lg bg-rose-950/50 p-3 text-xs text-rose-100">{errorText}</pre> : null}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-12">
-        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-8">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-sky-300">Matter Workspace</p>
               <h3 className="mt-1 text-2xl font-semibold">{selectedMatter?.title ?? "No matter selected"}</h3>
-              <p className="text-sm text-slate-400">{selectedMatter?.referenceNumber} · {selectedMatter?.venue ?? "Venue TBD"} · {selectedMatter?.caseType ?? "Case type"}</p>
+              <p className="text-sm text-slate-500">{selectedMatter?.referenceNumber} · {selectedMatter?.venue ?? "Venue TBD"} · {selectedMatter?.caseType ?? "Case type"}</p>
             </div>
             <select
               value={matterId}
               onChange={(e) => setMatterId(e.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-700 bg-slate-50 px-3 py-2 text-sm"
             >
               {matters.length === 0 ? <option value="">No matters available</option> : null}
               {matters.map((m) => (
@@ -294,38 +294,38 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
             <button onClick={markInProgress} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium hover:bg-indigo-500" disabled={busy !== "" || matterJobs.length === 0}>
               {busy === "status" ? "Updating..." : "Mark In Progress"}
             </button>
-            <button onClick={runGraphql} className="rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800" disabled={busy !== ""}>
+            <button onClick={runGraphql} className="rounded-lg border border-slate-600 px-3 py-2 text-sm hover:bg-slate-100" disabled={busy !== ""}>
               Run GraphQL Insight
             </button>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Upcoming Proceedings</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Upcoming Proceedings</p>
               <div className="mt-3 space-y-2">
                 {matterJobs.slice(0, 4).map((job) => (
-                  <div key={job.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <div key={job.id} className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{new Date(job.scheduledStart).toLocaleString()}</p>
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusChip(job.status)}`}>{job.status}</span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-400">{job.location ?? "Location TBD"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{job.location ?? "Location TBD"}</p>
                   </div>
                 ))}
                 {matterJobs.length === 0 ? <p className="text-xs text-slate-500">No proceedings yet.</p> : null}
               </div>
             </article>
 
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Records (Transcripts + Exhibits)</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Records (Transcripts + Exhibits)</p>
               <div className="mt-3 space-y-2">
                 {matterRecords.slice(0, 4).map((record) => (
-                  <div key={record.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <div key={record.id} className="rounded-lg border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium">{record.title}</p>
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] ${statusChip(record.status)}`}>{record.status}</span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-400">{record.originalFileName}</p>
+                    <p className="mt-1 text-xs text-slate-500">{record.originalFileName}</p>
                   </div>
                 ))}
                 {matterRecords.length === 0 ? <p className="text-xs text-slate-500">No records loaded.</p> : null}
@@ -334,45 +334,45 @@ export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserI
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-4">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-4">
           <p className="text-xs uppercase tracking-[0.16em] text-sky-300">AI + Search Assistant</p>
           <div className="mt-3 flex gap-2">
-            <input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm" />
+            <input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-50 px-3 py-2 text-sm" />
             <button onClick={runSearch} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm hover:bg-emerald-500" disabled={busy !== "" || !matterId}>Search</button>
           </div>
           <button onClick={runSummary} className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-sm hover:bg-violet-500" disabled={busy !== "" || !matterId}>Generate AI Summary</button>
 
           <div className="mt-4 space-y-3">
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Summary</p>
-              <p className="mt-2 text-sm text-slate-200">{summary || "Run AI Summary to populate this panel."}</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Summary</p>
+              <p className="mt-2 text-sm text-slate-700">{summary || "Run AI Summary to populate this panel."}</p>
             </article>
 
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Search Results</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Search Results</p>
               <div className="mt-2 space-y-2">
                 {searchResult.length === 0 ? <p className="text-xs text-slate-500">No search run yet.</p> : null}
                 {searchResult.map((item, idx) => (
-                  <div key={`${item.title}-${idx}`} className="rounded-lg border border-slate-800 bg-slate-900 p-2">
-                    <p className="text-xs text-sky-200">{item.kind}</p>
-                    <p className="text-sm font-medium text-slate-100">{item.title}</p>
-                    <p className="text-xs text-slate-400">{item.subtitle}</p>
+                  <div key={`${item.title}-${idx}`} className="rounded-lg border border-slate-200 bg-white p-2">
+                    <p className="text-xs text-sky-700">{item.kind}</p>
+                    <p className="text-sm font-medium text-slate-800">{item.title}</p>
+                    <p className="text-xs text-slate-500">{item.subtitle}</p>
                   </div>
                 ))}
               </div>
             </article>
 
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-400">GraphQL Insight</p>
-              <p className="mt-2 text-sm text-slate-200">{graphqlInsight || "Run GraphQL Insight to show cross-entity retrieval."}</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">GraphQL Insight</p>
+              <p className="mt-2 text-sm text-slate-700">{graphqlInsight || "Run GraphQL Insight to show cross-entity retrieval."}</p>
             </article>
 
-            <article className="rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <p className="text-xs uppercase tracking-wide text-slate-400">Activity</p>
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Activity</p>
               <div className="mt-2 space-y-1">
                 {activity.length === 0 ? <p className="text-xs text-slate-500">No actions yet.</p> : null}
                 {activity.map((a) => (
-                  <p key={a.id} className="text-xs text-slate-300">[{a.at}] {a.text}</p>
+                  <p key={a.id} className="text-xs text-slate-600">[{a.at}] {a.text}</p>
                 ))}
               </div>
             </article>
