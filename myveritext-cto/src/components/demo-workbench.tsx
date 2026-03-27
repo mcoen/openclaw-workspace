@@ -17,8 +17,17 @@ async function safeJson(resp: Response) {
   }
 }
 
-export function DemoWorkbench({ defaultUserId, defaultMatterId }: { defaultUserId: string; defaultMatterId: string }) {
-  const [tab, setTab] = useState<Tab>("schedule");
+export function DemoWorkbench({ defaultUserId, defaultMatterId, initialTab = "schedule" }: { defaultUserId: string; defaultMatterId: string; initialTab?: Tab | string }) {
+  const normalizeTab = (value: string): Tab => {
+    if (value === "home") return "schedule";
+    if (value === "schedule") return "schedule";
+    if (value === "virtual") return "virtual";
+    if (value === "exhibit-share") return "exhibit";
+    if (value === "downloads") return "downloads";
+    return "schedule";
+  };
+
+  const [tab, setTab] = useState<Tab>(normalizeTab(initialTab));
   const [userId, setUserId] = useState(defaultUserId);
   const [idToken, setIdToken] = useState("");
 
